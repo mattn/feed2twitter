@@ -77,7 +77,7 @@ func main() {
 	var ver bool
 
 	flag.BoolVar(&skip, "skip", false, "Skip tweet")
-	flag.StringVar(&dsn, "dsn", "", "Database source")
+	flag.StringVar(&dsn, "dsn", os.Getenv("FEED2TWITTER_DSN"), "Database source")
 	flag.StringVar(&feedURL, "feed", "", "Feed URL")
 	flag.StringVar(&format, "format", "{{.Title}}\n{{.Link}}", "Tweet Format")
 	flag.StringVar(&clientToken, "client-token", os.Getenv("FEED2TWITTER_CLIENT_TOKEN"), "Twitter ClientToken")

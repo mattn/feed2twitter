@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"text/template"
 	"time"
 
@@ -128,7 +129,9 @@ func main() {
 		}
 		_, err := bundb.NewInsert().Model(&fi).Exec(context.Background())
 		if err != nil {
-			log.Println(err)
+			if !strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+				log.Println(err)
+			}
 			continue
 		}
 

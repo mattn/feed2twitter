@@ -94,6 +94,8 @@ func main() {
 
 	t := template.Must(template.New("").Parse(format))
 
+	oauthClient.Credentials.Token = clientToken
+	oauthClient.Credentials.Secret = clientSecret
 	token := &oauth.Credentials{
 		Token:  accessToken,
 		Secret: accessSecret,

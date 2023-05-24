@@ -67,6 +67,19 @@ spec:
           restartPolicy: Never
 ```
 
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vim-jp-feed-bot
+data:
+  feed2twitter-client-token: 'XXXXXXXXXXXXXXXXXXXXXX'
+  feed2twitter-client-secret: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+  feed2twitter-access-token: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+  feed2twitter-access-secret: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+  feed2twitter-dsn: 'postgres://user:password@server/database'
+```
+
 ## Installation
 
 ```

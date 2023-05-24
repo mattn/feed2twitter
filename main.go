@@ -21,6 +21,12 @@ import (
 	"github.com/garyburd/go-oauth/oauth"
 )
 
+const name = "feed2twitter"
+
+const version = "0.0.0"
+
+var revision = "HEAD"
+
 const (
 	updateURL = "https://api.twitter.com/1.1/statuses/update.json"
 )
@@ -68,6 +74,8 @@ func main() {
 	var feedURL string
 	var format string
 	var clientToken, clientSecret, accessToken, accessSecret string
+	var ver bool
+
 	flag.BoolVar(&skip, "skip", false, "Skip tweet")
 	flag.StringVar(&dsn, "dsn", "", "Database source")
 	flag.StringVar(&feedURL, "feed", "", "Feed URL")
@@ -76,7 +84,13 @@ func main() {
 	flag.StringVar(&clientSecret, "client-secret", os.Getenv("FEED2TWITTER_CLIENT_SECRET"), "Twitter ClientSecret")
 	flag.StringVar(&accessToken, "access-token", os.Getenv("FEED2TWITTER_ACCESS_TOKEN"), "Twitter AccessToken")
 	flag.StringVar(&accessSecret, "access-secret", os.Getenv("FEED2TWITTER_ACCESS_SECRET"), "Twitter AccessSecret")
+	flag.BoolVar(&ver, "v", false, "show version")
 	flag.Parse()
+
+	if ver {
+		fmt.Println(version)
+		os.Exit(0)
+	}
 
 	t := template.Must(template.New("").Parse(format))
 

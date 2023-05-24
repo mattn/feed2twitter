@@ -37,10 +37,6 @@ var (
 		ResourceOwnerAuthorizationURI: "https://api.twitter.com/oauth/authenticate",
 		TokenRequestURI:               "https://api.twitter.com/oauth/access_token",
 	}
-	dry        = flag.Bool("dry", false, "dry-run")
-	silent     = flag.Bool("s", false, "no post")
-	configFile = flag.String("c", "config.json", "path to config.json")
-	issuesFile = flag.String("f", "issues.json", "path to issues.json")
 )
 
 type Feed2Twitter struct {

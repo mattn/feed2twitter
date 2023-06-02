@@ -28,7 +28,7 @@ spec:
         spec:
           containers:
           - name: vim-jp-feed-bot
-            image: mattn/feed2witter
+            image: mattn/feed2twitter
             imagePullPolicy: IfNotPresent
             #imagePullPolicy: Always
             command: ["/go/bin/feed2twitter"]

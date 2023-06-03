@@ -33,7 +33,6 @@ spec:
             #imagePullPolicy: Always
             command: ["/go/bin/feed2twitter"]
             args:
-            - '-dsn'
             - '-feed'
             - 'https://vim-jp.org/rss.xml'
             - '-format'

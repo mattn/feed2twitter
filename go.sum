@@ -5,8 +5,10 @@ github.com/andybalholm/cascadia v1.3.1/go.mod h1:R4bJ1UQfqADjvDa4P6HZHLh/3OxWWEq
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/garyburd/go-oauth v0.0.0-20180319155456-bca2e7f09a17 h1:GOfMz6cRgTJ9jWV0qAezv642OhPnKEG7gtUjJSdStHE=
-github.com/garyburd/go-oauth v0.0.0-20180319155456-bca2e7f09a17/go.mod h1:HfkOCN6fkKKaPSAeNq/er3xObxTW4VLeY6UUK895gLQ=
+github.com/dghubble/oauth1 v0.7.2 h1:pwcinOZy8z6XkNxvPmUDY52M7RDPxt0Xw1zgZ6Cl5JA=
+github.com/dghubble/oauth1 v0.7.2/go.mod h1:9erQdIhqhOHG/7K9s/tgh9Ks/AfoyrO5mW/43Lu2+kE=
+github.com/g8rswimmer/go-twitter/v2 v2.1.5 h1:Uj9Yuof2UducrP4Xva7irnUJfB9354/VyUXKmc2D5gg=
+github.com/g8rswimmer/go-twitter/v2 v2.1.5/go.mod h1:/55xWb313KQs25X7oZrNSEwLQNkYHhPsDwFstc45vhc=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD/E=
 github.com/jinzhu/inflection v1.0.0/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=

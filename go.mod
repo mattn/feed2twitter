@@ -3,7 +3,8 @@ module github.com/mattn/feed2twitter
 go 1.20
 
 require (
-	github.com/garyburd/go-oauth v0.0.0-20180319155456-bca2e7f09a17
+	github.com/dghubble/oauth1 v0.7.2
+	github.com/g8rswimmer/go-twitter/v2 v2.1.5
 	github.com/lib/pq v1.10.9
 	github.com/mmcdole/gofeed v1.2.1
 	github.com/uptrace/bun v1.1.13

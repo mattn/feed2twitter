@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"text/template"
@@ -19,7 +18,8 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 
-	"github.com/garyburd/go-oauth/oauth"
+	"github.com/dghubble/oauth1"
+	twitter "github.com/g8rswimmer/go-twitter/v2"
 )
 
 const name = "feed2twitter"
@@ -27,18 +27,6 @@ const name = "feed2twitter"
 const version = "0.0.7"
 
 var revision = "HEAD"
-
-const (
-	updateURL = "https://api.twitter.com/1.1/statuses/update.json"
-)
-
-var (
-	oauthClient = oauth.Client{
-		TemporaryCredentialRequestURI: "https://api.twitter.com/oauth/request_token",
-		ResourceOwnerAuthorizationURI: "https://api.twitter.com/oauth/authenticate",
-		TokenRequestURI:               "https://api.twitter.com/oauth/access_token",
-	}
-)
 
 type Feed2Twitter struct {
 	bun.BaseModel `bun:"table:feed2twitter,alias:f"`
@@ -48,21 +36,10 @@ type Feed2Twitter struct {
 	CreatedAt time.Time `bun:"created_at,notnull,default:current_timestamp" json:"created_at"`
 }
 
-func postTweet(token *oauth.Credentials, status string) error {
-	param := make(url.Values)
-	param.Set("status", status)
-	oauthClient.SignParam(token, "POST", updateURL, param)
-	resp, err := http.PostForm(updateURL, url.Values(param))
-	if err != nil {
-		log.Println("failed to post tweet:", err)
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		log.Println("failed to post tweet")
-		return err
-	}
-	return nil
+type authorize struct {
+}
+
+func (a authorize) Add(req *http.Request) {
 }
 
 func main() {
@@ -91,11 +68,14 @@ func main() {
 
 	t := template.Must(template.New("").Parse(format))
 
-	oauthClient.Credentials.Token = clientToken
-	oauthClient.Credentials.Secret = clientSecret
-	token := &oauth.Credentials{
-		Token:  accessToken,
-		Secret: accessSecret,
+	config := oauth1.NewConfig(clientToken, clientSecret)
+	client := &twitter.Client{
+		Authorizer: authorize{},
+		Client: config.Client(oauth1.NoContext, &oauth1.Token{
+			Token:       accessToken,
+			TokenSecret: accessSecret,
+		}),
+		Host: "https://api.twitter.com",
 	}
 
 	db, err := sql.Open("postgres", dsn)
@@ -156,7 +136,10 @@ func main() {
 			log.Printf("%q", buf.String())
 			continue
 		}
-		err = postTweet(token, buf.String())
+		req := twitter.CreateTweetRequest{
+			Text: buf.String(),
+		}
+		_, err = client.CreateTweet(context.Background(), req)
 		if err != nil {
 			log.Println(err)
 			continue

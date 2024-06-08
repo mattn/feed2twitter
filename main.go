@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -47,6 +48,8 @@ func main() {
 	var dsn string
 	var feedURL string
 	var format string
+	var pattern string
+	var re *regexp.Regexp
 	var clientToken, clientSecret, accessToken, accessSecret string
 	var ver bool
 
@@ -54,6 +57,7 @@ func main() {
 	flag.StringVar(&dsn, "dsn", os.Getenv("FEED2TWITTER_DSN"), "Database source")
 	flag.StringVar(&feedURL, "feed", "", "Feed URL")
 	flag.StringVar(&format, "format", "{{.Title}}\n{{.Link}}", "Tweet Format")
+	flag.StringVar(&pattern, "pattern", "", "Match pattern")
 	flag.StringVar(&clientToken, "client-token", os.Getenv("FEED2TWITTER_CLIENT_TOKEN"), "Twitter ClientToken")
 	flag.StringVar(&clientSecret, "client-secret", os.Getenv("FEED2TWITTER_CLIENT_SECRET"), "Twitter ClientSecret")
 	flag.StringVar(&accessToken, "access-token", os.Getenv("FEED2TWITTER_ACCESS_TOKEN"), "Twitter AccessToken")
@@ -66,17 +70,15 @@ func main() {
 		os.Exit(0)
 	}
 
-	t := template.Must(template.New("").Parse(format))
-
-	config := oauth1.NewConfig(clientToken, clientSecret)
-	client := &twitter.Client{
-		Authorizer: authorize{},
-		Client: config.Client(oauth1.NoContext, &oauth1.Token{
-			Token:       accessToken,
-			TokenSecret: accessSecret,
-		}),
-		Host: "https://api.twitter.com",
+	var err error
+	if pattern != "" {
+		re, err = regexp.Compile(pattern)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+
+	t := template.Must(template.New("").Parse(format))
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -90,6 +92,16 @@ func main() {
 	if err != nil {
 		log.Println(err)
 		return
+	}
+
+	config := oauth1.NewConfig(clientToken, clientSecret)
+	client := &twitter.Client{
+		Authorizer: authorize{},
+		Client: config.Client(oauth1.NoContext, &oauth1.Token{
+			Token:       accessToken,
+			TokenSecret: accessSecret,
+		}),
+		Host: "https://api.twitter.com",
 	}
 
 	feed, err := gofeed.NewParser().ParseURL(feedURL)
@@ -132,10 +144,18 @@ func main() {
 				continue
 			}
 		}
+
+		if re != nil {
+			if !re.MatchString(buf.String()) {
+				continue
+			}
+		}
+
 		if skip {
 			log.Printf("%q", buf.String())
 			continue
 		}
+
 		req := twitter.CreateTweetRequest{
 			Text: buf.String(),
 		}

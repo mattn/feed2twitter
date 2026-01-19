@@ -56,7 +56,7 @@ func main() {
 	flag.BoolVar(&skip, "skip", false, "Skip tweet")
 	flag.StringVar(&dsn, "dsn", os.Getenv("FEED2TWITTER_DSN"), "Database source")
 	flag.StringVar(&feedURL, "feed", "", "Feed URL")
-	flag.StringVar(&format, "format", "{{.Title}}\n{{.Link}}", "Tweet Format")
+	flag.StringVar(&format, "format", "{{.Title | normalize}}\n{{.Link}}", "Tweet Format")
 	flag.StringVar(&pattern, "pattern", "", "Match pattern")
 	flag.StringVar(&clientToken, "client-token", os.Getenv("FEED2TWITTER_CLIENT_TOKEN"), "Twitter ClientToken")
 	flag.StringVar(&clientSecret, "client-secret", os.Getenv("FEED2TWITTER_CLIENT_SECRET"), "Twitter ClientSecret")
@@ -78,7 +78,15 @@ func main() {
 		}
 	}
 
-	t := template.Must(template.New("").Parse(format))
+	funcMap := template.FuncMap{
+		"normalize": func(s string) string {
+			// Remove invisible Unicode characters and squeeze multiple newlines
+			s = regexp.MustCompile(`[\p{Cf}]`).ReplaceAllString(s, "")
+			s = regexp.MustCompile(`\n\n+`).ReplaceAllString(s, "\n")
+			return s
+		},
+	}
+	t := template.Must(template.New("").Funcs(funcMap).Parse(format))
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -133,7 +141,9 @@ func main() {
 			log.Println(err)
 			continue
 		}
+
 		content := buf.String()
+
 		runes := []rune(content)
 		if len(runes) > 140 {
 			item.Title = string(item.Title[:len(item.Title)-len(runes)+140])
@@ -145,19 +155,21 @@ func main() {
 			}
 		}
 
+		content = buf.String()
+
 		if re != nil {
-			if !re.MatchString(buf.String()) {
+			if !re.MatchString(content) {
 				continue
 			}
 		}
 
 		if skip {
-			log.Printf("%q", buf.String())
+			log.Printf("%q", content)
 			continue
 		}
 
 		req := twitter.CreateTweetRequest{
-			Text: buf.String(),
+			Text: content,
 		}
 		_, err = client.CreateTweet(context.Background(), req)
 		if err != nil {

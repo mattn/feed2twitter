@@ -48,6 +48,7 @@ func main() {
 	var dsn string
 	var feedURL string
 	var format string
+	var replyFormat string
 	var pattern string
 	var re *regexp.Regexp
 	var clientToken, clientSecret, accessToken, accessSecret string
@@ -57,6 +58,7 @@ func main() {
 	flag.StringVar(&dsn, "dsn", os.Getenv("FEED2TWITTER_DSN"), "Database source")
 	flag.StringVar(&feedURL, "feed", "", "Feed URL")
 	flag.StringVar(&format, "format", "{{.Title | normalize}}\n{{.Link}}", "Tweet Format")
+	flag.StringVar(&replyFormat, "reply-format", "", "Reply tweet format (post as reply to the main tweet)")
 	flag.StringVar(&pattern, "pattern", "", "Match pattern")
 	flag.StringVar(&clientToken, "client-token", os.Getenv("FEED2TWITTER_CLIENT_TOKEN"), "Twitter ClientToken")
 	flag.StringVar(&clientSecret, "client-secret", os.Getenv("FEED2TWITTER_CLIENT_SECRET"), "Twitter ClientSecret")
@@ -87,6 +89,11 @@ func main() {
 		},
 	}
 	t := template.Must(template.New("").Funcs(funcMap).Parse(format))
+
+	var replyTmpl *template.Template
+	if replyFormat != "" {
+		replyTmpl = template.Must(template.New("").Funcs(funcMap).Parse(replyFormat))
+	}
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -171,10 +178,30 @@ func main() {
 		req := twitter.CreateTweetRequest{
 			Text: content,
 		}
-		_, err = client.CreateTweet(context.Background(), req)
+		res, err := client.CreateTweet(context.Background(), req)
 		if err != nil {
 			log.Println(err)
 			continue
+		}
+
+		if replyTmpl != nil && res.Tweet != nil {
+			var replyBuf bytes.Buffer
+			err = replyTmpl.Execute(&replyBuf, &item)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			replyReq := twitter.CreateTweetRequest{
+				Text: replyBuf.String(),
+				Reply: &twitter.CreateTweetReply{
+					InReplyToTweetID: res.Tweet.ID,
+				},
+			}
+			_, err = client.CreateTweet(context.Background(), replyReq)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
 		}
 	}
 }

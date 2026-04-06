@@ -52,6 +52,7 @@ func main() {
 	var pattern string
 	var re *regexp.Regexp
 	var clientToken, clientSecret, accessToken, accessSecret string
+	var maxlen int
 	var ver bool
 
 	flag.BoolVar(&skip, "skip", false, "Skip tweet")
@@ -60,6 +61,7 @@ func main() {
 	flag.StringVar(&format, "format", "{{.Title | normalize}}\n{{.Link}}", "Tweet Format")
 	flag.StringVar(&replyFormat, "reply-format", "", "Reply tweet format (post as reply to the main tweet)")
 	flag.StringVar(&pattern, "pattern", "", "Match pattern")
+	flag.IntVar(&maxlen, "maxlen", 140, "Max tweet length (0 for unlimited)")
 	flag.StringVar(&clientToken, "client-token", os.Getenv("FEED2TWITTER_CLIENT_TOKEN"), "Twitter ClientToken")
 	flag.StringVar(&clientSecret, "client-secret", os.Getenv("FEED2TWITTER_CLIENT_SECRET"), "Twitter ClientSecret")
 	flag.StringVar(&accessToken, "access-token", os.Getenv("FEED2TWITTER_ACCESS_TOKEN"), "Twitter AccessToken")
@@ -152,8 +154,8 @@ func main() {
 		content := buf.String()
 
 		runes := []rune(content)
-		if len(runes) > 140 {
-			item.Title = string(item.Title[:len(item.Title)-len(runes)+140])
+		if maxlen > 0 && len(runes) > maxlen {
+			item.Title = string(item.Title[:len(item.Title)-len(runes)+maxlen])
 			buf.Reset()
 			err = t.Execute(&buf, &item)
 			if err != nil {

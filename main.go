@@ -18,6 +18,7 @@ import (
 	"github.com/mmcdole/gofeed"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
+	"golang.org/x/net/html"
 
 	"github.com/dghubble/oauth1"
 	twitter "github.com/g8rswimmer/go-twitter/v2"
@@ -41,6 +42,81 @@ type authorize struct {
 }
 
 func (a authorize) Add(req *http.Request) {
+}
+
+func normalize(s string) string {
+	// Remove invisible Unicode characters and squeeze multiple newlines
+	s = regexp.MustCompile(`[\p{Cf}]`).ReplaceAllString(s, "")
+	s = regexp.MustCompile(`\n\n+`).ReplaceAllString(s, "\n")
+	return s
+}
+
+func attrValue(z *html.Tokenizer, name string) string {
+	for {
+		k, v, more := z.TagAttr()
+		if string(k) == name {
+			return string(v)
+		}
+		if !more {
+			return ""
+		}
+	}
+}
+
+func htmlToText(s string) string {
+	z := html.NewTokenizer(strings.NewReader(s))
+	var b strings.Builder
+	var hrefs []string
+	for {
+		tt := z.Next()
+		if tt == html.ErrorToken {
+			break
+		}
+		switch tt {
+		case html.TextToken:
+			b.Write(z.Text())
+		case html.StartTagToken, html.SelfClosingTagToken:
+			tn, hasAttr := z.TagName()
+			switch string(tn) {
+			case "br", "p", "div", "li":
+				b.WriteString("\n")
+			case "img":
+				if hasAttr {
+					if src := attrValue(z, "src"); src != "" {
+						b.WriteString("\n")
+						b.WriteString(src)
+						b.WriteString("\n")
+					}
+				}
+			case "a":
+				href := ""
+				if hasAttr {
+					href = attrValue(z, "href")
+				}
+				if tt == html.SelfClosingTagToken {
+					if href != "" {
+						b.WriteString(" ")
+						b.WriteString(href)
+						b.WriteString(" ")
+					}
+				} else {
+					hrefs = append(hrefs, href)
+				}
+			}
+		case html.EndTagToken:
+			tn, _ := z.TagName()
+			if string(tn) == "a" && len(hrefs) > 0 {
+				href := hrefs[len(hrefs)-1]
+				hrefs = hrefs[:len(hrefs)-1]
+				if href != "" {
+					b.WriteString(" ")
+					b.WriteString(href)
+					b.WriteString(" ")
+				}
+			}
+		}
+	}
+	return b.String()
 }
 
 func main() {
@@ -83,12 +159,8 @@ func main() {
 	}
 
 	funcMap := template.FuncMap{
-		"normalize": func(s string) string {
-			// Remove invisible Unicode characters and squeeze multiple newlines
-			s = regexp.MustCompile(`[\p{Cf}]`).ReplaceAllString(s, "")
-			s = regexp.MustCompile(`\n\n+`).ReplaceAllString(s, "\n")
-			return s
-		},
+		"normalize": normalize,
+		"text":      htmlToText,
 	}
 	t := template.Must(template.New("").Funcs(funcMap).Parse(format))
 
